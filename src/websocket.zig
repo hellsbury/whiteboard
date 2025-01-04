@@ -7,7 +7,7 @@
 ///   - Does not support Sec-WebSocket-Protocol (clients can pass it, but we will
 ///     not validate it, or do anything with it)
 ///   - Does not support interleaving control frames with fragmented message
-///     frames, allow this is allowed by the protocol specification.
+///     frames, although this is allowed by the protocol specification.
 ///   - Does not validate client masking, but does perform unmasking if a masking
 ///     key is provided
 ///   - Writing masked payloads is not supported, as this is only inteded to work
@@ -357,8 +357,6 @@ fn determinePayloadLength(reader: anytype, first_byte: u8) !LengthMeta {
     } else if (length == 126) {
         try readAtLeastOrThrow(reader, buf[0..2], 2);
         return .{
-            // FIXME: segfault here at readInt, I think?  but that doesn't make
-            // sense because I'm never calling read_frame...
             .length = @intCast(std.mem.readInt(u16, @ptrCast(buf[0..2]), .big)),
             .advance_cursor = 2,
         };

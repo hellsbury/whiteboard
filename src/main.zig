@@ -30,8 +30,7 @@ fn handleWsConversation(allocator: std.mem.Allocator, conn: std.net.Server.Conne
     const message_reader = ws.MessageReader(@TypeOf(conn_reader));
     const message_writer = ws.FrameWriter(@TypeOf(conn_writer));
 
-    // assuming that pinging the client for liveness checks is currently
-    // unecessary.
+    // assuming that pinging the client for liveness checks is currently unecessary.
     while (true) {
         const message = message_reader.readMessage(allocator, conn_reader, 1 << 20) catch |err| switch (err) {
             ws.ReadError.EndOfStream => {
