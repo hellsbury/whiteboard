@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" value="device-width" />
+    <title>whiteboard</title>
+  </head>
+  <body>
+    <h1>whiteboard app</h1>
+  </body>
+  <script>
+    console.log("attempting to create new ws connection");
+    const ws = new WebSocket("ws://localhost:8000/connect");
+
+    function handleServerMessage(event) {
+      console.log(`received message from server: '${event.data}'`);
+    }
+
+    ws.onmessage = handleServerMessage;
+
+    ws.onopen = () => {
+      ws.send("hi from index.html");
+    };
+  </script>
+</html>
