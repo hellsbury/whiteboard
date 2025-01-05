@@ -174,7 +174,6 @@
   </body>
   <script>
     /* state management */
-
     let state = {
       boardState: {
         columns: [
@@ -184,6 +183,7 @@
             cards: [
               { id: "a", title: "something to do" },
               { id: "c", title: "idk anymore" },
+              { id: "f", title: "a third card how about that" },
             ],
           },
           {
@@ -206,7 +206,6 @@
     };
 
     function reducer(state, action) {
-      console.log(state, action);
       switch (action.type) {
         case "MOVE_CARD": {
           const columns = [...state.boardState.columns];
@@ -221,6 +220,8 @@
             },
           };
         }
+        default:
+          throw new Error(`unknown action type: ${action.type}`);
       }
     }
 
@@ -241,7 +242,6 @@
     }
 
     /* event handlers */
-
     const columnTemplate = document.getElementById("column-template");
     const cardTemplate = document.getElementById("card-template");
     const boardParent = document.getElementById("board-parent");
@@ -258,10 +258,10 @@
 
     function dropHandler(event) {
       event.preventDefault();
+
       const data = event.dataTransfer.getData("text/plain");
       const draggingCard = document.getElementById(data);
-
-      const previousColumn = draggingCard.getAttribute("data-column-idx");
+      const previousColumn = Number(draggingCard.getAttribute("data-column-idx"));
 
       let target = event.target;
       while (target.getAttribute("data-type") != "parent-column") {
@@ -281,29 +281,36 @@
           JSON.parse(draggingCard.getAttribute("data-card")),
         );
         return;
+      } else {
+        const newCardIndex = getNewCardIndex(target, event);
+        moveCard(
+          previousColumn,
+          newColumnIdx,
+          newCardIndex,
+          JSON.parse(draggingCard.getAttribute("data-card")),
+        );
       }
+    }
 
-      let insideIdx = 0;
-      let i = 0;
-      for (const child of target.children) {
+    function getNewCardIndex(target, event) {
+      let idx = 0;
+      Array.from(target.children).forEach((child, i) => {
         if (child.getAttribute("data-type") == "column-card") {
           const r = child.getBoundingClientRect();
           if (event.clientY < r.bottom && event.clientY > r.top) {
-            insideIdx = i;
+            idx = i;
             const midpoint = r.top + r.height / 2;
             if (event.clientY > midpoint) {
-              insideIdx++;
+              idx++;
             }
-            break;
           }
         }
-        i++;
-      }
+      });
 
       let aboveFirst = false;
       let belowLast = false;
 
-      if (insideIdx == 0) {
+      if (idx == 0) {
         const fr = target.children[0].getBoundingClientRect();
         const lr = target.children[target.children.length - 1].getBoundingClientRect();
         if (fr.top > event.clientY) {
@@ -313,20 +320,13 @@
         }
       }
 
-      let finalIndex = insideIdx;
-
       if (aboveFirst) {
-        finalIndex = 0;
+        idx = 0;
       } else if (belowLast) {
-        finalIndex = target.children.length;
+        idx = target.children.length;
       }
 
-      moveCard(
-        Number(previousColumn),
-        newColumnIdx,
-        finalIndex,
-        JSON.parse(draggingCard.getAttribute("data-card")),
-      );
+      return idx;
     }
 
     function render() {
@@ -337,8 +337,7 @@
         }
       }
 
-      let i = 0;
-      for (const col of state.boardState.columns) {
+      Array.from(state.boardState.columns).forEach((col, i) => {
         const colNode = columnTemplate.content.cloneNode(true);
         colNode.querySelector("h2").textContent = col.title;
 
@@ -356,8 +355,7 @@
         }
 
         boardParent.appendChild(colNode);
-        i++;
-      }
+      });
     }
 
     render();
