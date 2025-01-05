@@ -1,5 +1,6 @@
 const std = @import("std");
 const ws = @import("./websocket.zig");
+const builtin = @import("builtin");
 
 const Request = std.http.Server.Request;
 

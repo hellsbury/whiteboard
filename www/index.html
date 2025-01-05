@@ -1,11 +1,167 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" value="device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>whiteboard</title>
+    <style>
+      :root {
+        --content-width: 1280px;
+        --background-color: #ffffff;
+        /* tailwindcss "stone" pallette */
+        --text-color: #0c0a09;
+        --text-color-light: #a8a29e;
+        --border-color: #e7e5e4;
+        /* tailwindcss "blue" pallette */
+        --primary-color: #1e40af;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        padding: 0;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+
+        font-size: 16px;
+        font-family: sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      .header__container {
+        max-width: var(--content-width);
+        width: 100%;
+        padding: 1rem;
+      }
+
+      .header__title {
+        font-size: 1.5rem;
+        padding: 0;
+        margin: 0;
+      }
+
+      .header__title-link {
+        text-decoration: none;
+        color: var(--primary-color);
+      }
+
+      .main {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .main__container {
+        width: 100%;
+        max-width: var(--content-width);
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0 1rem 1rem 1rem;
+      }
+
+      .column {
+        padding: 1rem;
+        height: 100%;
+        min-width: min(90vw, 20rem);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .column-title {
+        font-weigtht: 700;
+        font-size: 1.3rem;
+      }
+
+      .column__card {
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        min-height: 16rem;
+      }
+
+      .column__card-title {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .footer {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        color: var(--text-color-light);
+        font-size: 0.8rem;
+      }
+
+      .footer__container {
+        width: 100%;
+        max-width: var(--content-width);
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      .footer__link {
+        margin-left: 0.5rem;
+        color: var(--primary-color);
+      }
+    </style>
   </head>
   <body>
-    <h1>whiteboard app</h1>
+    <header class="header">
+      <div class="header__container">
+        <h1 class="header__title">
+          <a class="header__title-link" href="/">whiteboard</a>
+        </h1>
+      </div>
+    </header>
+    <main class="main">
+      <div class="main__container">
+        <div class="column">
+          <h2 class="column-title">Backlog</h2>
+          <div class="column__card">
+            <h3 class="column__card-title">Card Title</h3>
+            <p class="column__card-contents">Card Contents</p>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="footer__container">
+        Copyright &copy; 2025 Michael Helvey & Mason Stooksbury.
+        <a href="https://github.com/hellsbury/whiteboard" class="footer__link">View Source</a>
+      </div>
+    </footer>
   </body>
   <script>
     console.log("attempting to create new ws connection");
