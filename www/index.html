@@ -86,10 +86,11 @@
       }
 
       .column {
-        padding: 1rem;
+        padding: 1rem 0;
         height: 100%;
         min-width: min(90vw, 20rem);
         overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -107,7 +108,6 @@
         border: 1px solid var(--border-color);
         padding: 1rem;
         border-radius: 0.5rem;
-        min-height: 16rem;
       }
 
       .column__card-title {
@@ -146,15 +146,7 @@
       </div>
     </header>
     <main class="main">
-      <div class="main__container">
-        <div class="column">
-          <h2 class="column-title">Backlog</h2>
-          <div class="column__card">
-            <h3 class="column__card-title">Card Title</h3>
-            <p class="column__card-contents">Card Contents</p>
-          </div>
-        </div>
-      </div>
+      <div class="main__container" id="board-parent"></div>
     </main>
     <footer class="footer">
       <div class="footer__container">
@@ -162,9 +154,215 @@
         <a href="https://github.com/hellsbury/whiteboard" class="footer__link">View Source</a>
       </div>
     </footer>
+    <template id="column-template">
+      <div class="column">
+        <h2 class="column-title">Column Title</h2>
+        <div
+          class="column"
+          ondrop="dropHandler(event)"
+          ondragover="dragoverHandler(event)"
+          data-type="parent-column"
+        ></div>
+      </div>
+    </template>
+    <template id="card-template">
+      <div class="column__card" draggable="true" data-type="column-card">
+        <h3 class="column__card-title">Card Title</h3>
+        <p class="column__card-contents">Card Contents</p>
+      </div>
+    </template>
   </body>
   <script>
-    console.log("attempting to create new ws connection");
+    /* state management */
+
+    let state = {
+      boardState: {
+        columns: [
+          {
+            id: "first_column",
+            title: "First Column",
+            cards: [
+              { id: "a", title: "something to do" },
+              { id: "c", title: "idk anymore" },
+            ],
+          },
+          {
+            id: "second_column",
+            title: "Second Column",
+            cards: [{ id: "b", title: "something I already did" }],
+          },
+          {
+            id: "third_column",
+            title: "Third Column",
+            cards: [{ id: "d", title: "lorum ipsum" }],
+          },
+          {
+            id: "fourth_column",
+            title: "Fourth Column",
+            cards: [{ id: "e", title: "dolor amat" }],
+          },
+        ],
+      },
+    };
+
+    function reducer(state, action) {
+      console.log(state, action);
+      switch (action.type) {
+        case "MOVE_CARD": {
+          const columns = [...state.boardState.columns];
+          const idx = columns[action.previousColumn].cards.findIndex((c) => c.id == action.card.id);
+          columns[action.previousColumn].cards.splice(idx, 1);
+          columns[action.newColumn].cards.splice(action.newIdx, 0, action.card);
+          return {
+            ...state,
+            boardState: {
+              ...state.boardState,
+              columns,
+            },
+          };
+        }
+      }
+    }
+
+    function dispatch(action) {
+      const newState = reducer(state, action);
+      state = newState;
+      render();
+    }
+
+    function moveCard(previousColumn, newColumn, newIdx, card) {
+      dispatch({
+        type: "MOVE_CARD",
+        previousColumn: previousColumn,
+        newColumn: newColumn,
+        card,
+        newIdx: newIdx,
+      });
+    }
+
+    /* event handlers */
+
+    const columnTemplate = document.getElementById("column-template");
+    const cardTemplate = document.getElementById("card-template");
+    const boardParent = document.getElementById("board-parent");
+
+    function dragStartHandler(event) {
+      event.dataTransfer.dropEffect = "move";
+      event.dataTransfer.setData("text/plain", event.target.id);
+    }
+
+    function dragoverHandler(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function dropHandler(event) {
+      event.preventDefault();
+      const data = event.dataTransfer.getData("text/plain");
+      const draggingCard = document.getElementById(data);
+
+      const previousColumn = draggingCard.getAttribute("data-column-idx");
+
+      let target = event.target;
+      while (target.getAttribute("data-type") != "parent-column") {
+        target = target.parentElement;
+      }
+
+      const newColumnIdx = Array.from(
+        document.querySelectorAll("[data-type='parent-column']"),
+      ).findIndex((x) => x === target);
+      draggingCard.setAttribute("data-column-idx", newColumnIdx);
+
+      if (target.children.length == 0) {
+        moveCard(
+          Number(previousColumn),
+          newColumnIdx,
+          0,
+          JSON.parse(draggingCard.getAttribute("data-card")),
+        );
+        return;
+      }
+
+      let insideIdx = 0;
+      let i = 0;
+      for (const child of target.children) {
+        if (child.getAttribute("data-type") == "column-card") {
+          const r = child.getBoundingClientRect();
+          if (event.clientY < r.bottom && event.clientY > r.top) {
+            insideIdx = i;
+            const midpoint = r.top + r.height / 2;
+            if (event.clientY > midpoint) {
+              insideIdx++;
+            }
+            break;
+          }
+        }
+        i++;
+      }
+
+      let aboveFirst = false;
+      let belowLast = false;
+
+      if (insideIdx == 0) {
+        const fr = target.children[0].getBoundingClientRect();
+        const lr = target.children[target.children.length - 1].getBoundingClientRect();
+        if (fr.top > event.clientY) {
+          aboveFirst = true;
+        } else if (lr.bottom < event.clientY) {
+          belowLast = true;
+        }
+      }
+
+      let finalIndex = insideIdx;
+
+      if (aboveFirst) {
+        finalIndex = 0;
+      } else if (belowLast) {
+        finalIndex = target.children.length;
+      }
+
+      moveCard(
+        Number(previousColumn),
+        newColumnIdx,
+        finalIndex,
+        JSON.parse(draggingCard.getAttribute("data-card")),
+      );
+    }
+
+    function render() {
+      if (boardParent.hasChildNodes()) {
+        const children = [...boardParent.childNodes];
+        for (const node of children) {
+          boardParent.removeChild(node);
+        }
+      }
+
+      let i = 0;
+      for (const col of state.boardState.columns) {
+        const colNode = columnTemplate.content.cloneNode(true);
+        colNode.querySelector("h2").textContent = col.title;
+
+        const colContainer = colNode.querySelector("[data-type='parent-column']");
+
+        for (const card of col.cards) {
+          const cardNode = cardTemplate.content.cloneNode(true);
+          cardNode.children[0].setAttribute("data-card", JSON.stringify(card));
+          cardNode.children[0].setAttribute("data-column-idx", i);
+          cardNode.children[0].querySelector("h3").textContent = card.title;
+          cardNode.children[0].id = card.id;
+
+          cardNode.children[0].addEventListener("dragstart", dragStartHandler);
+          colContainer.appendChild(cardNode);
+        }
+
+        boardParent.appendChild(colNode);
+        i++;
+      }
+    }
+
+    render();
+
+    /* Networking */
     const ws = new WebSocket("ws://localhost:8000/connect");
 
     function handleServerMessage(event) {
