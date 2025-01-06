@@ -1,14 +1,366 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" value="device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>whiteboard</title>
+    <style>
+      :root {
+        --content-width: 1280px;
+        --background-color: #ffffff;
+        /* tailwindcss "stone" pallette */
+        --text-color: #0c0a09;
+        --text-color-light: #a8a29e;
+        --border-color: #e7e5e4;
+        /* tailwindcss "blue" pallette */
+        --primary-color: #1e40af;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        padding: 0;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+
+        font-size: 16px;
+        font-family: sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      .header__container {
+        max-width: var(--content-width);
+        width: 100%;
+        padding: 1rem;
+      }
+
+      .header__title {
+        font-size: 1.5rem;
+        padding: 0;
+        margin: 0;
+      }
+
+      .header__title-link {
+        text-decoration: none;
+        color: var(--primary-color);
+      }
+
+      .main {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .main__container {
+        width: 100%;
+        max-width: var(--content-width);
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0 1rem 1rem 1rem;
+      }
+
+      .column {
+        padding: 1rem 0;
+        height: 100%;
+        min-width: min(90vw, 20rem);
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .column-title {
+        font-weigtht: 700;
+        font-size: 1.3rem;
+      }
+
+      .column__card {
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+
+      .column__card-title {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .footer {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        color: var(--text-color-light);
+        font-size: 0.8rem;
+      }
+
+      .footer__container {
+        width: 100%;
+        max-width: var(--content-width);
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      .footer__link {
+        margin-left: 0.5rem;
+        color: var(--primary-color);
+      }
+    </style>
   </head>
   <body>
-    <h1>whiteboard app</h1>
+    <header class="header">
+      <div class="header__container">
+        <h1 class="header__title">
+          <a class="header__title-link" href="/">whiteboard</a>
+        </h1>
+      </div>
+    </header>
+    <main class="main">
+      <div class="main__container" id="board-parent"></div>
+    </main>
+    <footer class="footer">
+      <div class="footer__container">
+        Copyright &copy; 2025 Michael Helvey & Mason Stooksbury.
+        <a href="https://github.com/hellsbury/whiteboard" class="footer__link">View Source</a>
+      </div>
+    </footer>
+    <template id="column-template">
+      <div class="column">
+        <h2 class="column-title">Column Title</h2>
+        <div
+          class="column"
+          ondrop="dropHandler(event)"
+          ondragover="dragoverHandler(event)"
+          data-type="parent-column"
+        ></div>
+      </div>
+    </template>
+    <template id="card-template">
+      <div class="column__card" draggable="true" data-type="column-card">
+        <h3 class="column__card-title">Card Title</h3>
+        <p class="column__card-contents">Card Contents</p>
+      </div>
+    </template>
   </body>
   <script>
-    console.log("attempting to create new ws connection");
+    /* state management */
+    let state = {
+      boardState: {
+        columns: [
+          {
+            id: "first_column",
+            title: "First Column",
+            cards: [
+              { id: "a", title: "something to do" },
+              { id: "c", title: "idk anymore" },
+              { id: "f", title: "a third card how about that" },
+            ],
+          },
+          {
+            id: "second_column",
+            title: "Second Column",
+            cards: [{ id: "b", title: "something I already did" }],
+          },
+          {
+            id: "third_column",
+            title: "Third Column",
+            cards: [{ id: "d", title: "lorum ipsum" }],
+          },
+          {
+            id: "fourth_column",
+            title: "Fourth Column",
+            cards: [{ id: "e", title: "dolor amat" }],
+          },
+        ],
+      },
+    };
+
+    function reducer(state, action) {
+      switch (action.type) {
+        case "MOVE_CARD": {
+          const columns = [...state.boardState.columns];
+          const idx = columns[action.previousColumn].cards.findIndex((c) => c.id == action.card.id);
+          columns[action.previousColumn].cards.splice(idx, 1);
+          columns[action.newColumn].cards.splice(action.newIdx, 0, action.card);
+          return {
+            ...state,
+            boardState: {
+              ...state.boardState,
+              columns,
+            },
+          };
+        }
+        default:
+          throw new Error(`unknown action type: ${action.type}`);
+      }
+    }
+
+    function dispatch(action) {
+      const newState = reducer(state, action);
+      state = newState;
+      render();
+    }
+
+    function moveCard(previousColumn, newColumn, newIdx, card) {
+      dispatch({
+        type: "MOVE_CARD",
+        previousColumn: previousColumn,
+        newColumn: newColumn,
+        card,
+        newIdx: newIdx,
+      });
+    }
+
+    /* event handlers */
+    const columnTemplate = document.getElementById("column-template");
+    const cardTemplate = document.getElementById("card-template");
+    const boardParent = document.getElementById("board-parent");
+
+    function dragStartHandler(event) {
+      event.dataTransfer.dropEffect = "move";
+      event.dataTransfer.setData("text/plain", event.target.id);
+    }
+
+    function dragoverHandler(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function dropHandler(event) {
+      event.preventDefault();
+
+      const data = event.dataTransfer.getData("text/plain");
+      const draggingCard = document.getElementById(data);
+      const previousColumn = Number(draggingCard.getAttribute("data-column-idx"));
+
+      let target = event.target;
+      while (target.getAttribute("data-type") != "parent-column") {
+        target = target.parentElement;
+      }
+
+      const newColumnIdx = Array.from(
+        document.querySelectorAll("[data-type='parent-column']"),
+      ).findIndex((x) => x === target);
+      draggingCard.setAttribute("data-column-idx", newColumnIdx);
+
+      if (target.children.length == 0) {
+        moveCard(
+          Number(previousColumn),
+          newColumnIdx,
+          0,
+          JSON.parse(draggingCard.getAttribute("data-card")),
+        );
+        return;
+      } else {
+        const newCardIndex = getNewCardIndex(target, event);
+        moveCard(
+          previousColumn,
+          newColumnIdx,
+          newCardIndex,
+          JSON.parse(draggingCard.getAttribute("data-card")),
+        );
+      }
+    }
+
+    function getNewCardIndex(target, event) {
+      let idx = 0;
+      Array.from(target.children).forEach((child, i) => {
+        if (child.getAttribute("data-type") == "column-card") {
+          const r = child.getBoundingClientRect();
+          if (event.clientY < r.bottom && event.clientY > r.top) {
+            idx = i;
+            const midpoint = r.top + r.height / 2;
+            if (event.clientY > midpoint) {
+              idx++;
+            }
+          }
+        }
+      });
+
+      let aboveFirst = false;
+      let belowLast = false;
+
+      if (idx == 0) {
+        const fr = target.children[0].getBoundingClientRect();
+        const lr = target.children[target.children.length - 1].getBoundingClientRect();
+        if (fr.top > event.clientY) {
+          aboveFirst = true;
+        } else if (lr.bottom < event.clientY) {
+          belowLast = true;
+        }
+      }
+
+      if (aboveFirst) {
+        idx = 0;
+      } else if (belowLast) {
+        idx = target.children.length;
+      }
+
+      return idx;
+    }
+
+    function render() {
+      if (boardParent.hasChildNodes()) {
+        const children = [...boardParent.childNodes];
+        for (const node of children) {
+          boardParent.removeChild(node);
+        }
+      }
+
+      Array.from(state.boardState.columns).forEach((col, i) => {
+        const colNode = columnTemplate.content.cloneNode(true);
+        colNode.querySelector("h2").textContent = col.title;
+
+        const colContainer = colNode.querySelector("[data-type='parent-column']");
+
+        for (const card of col.cards) {
+          const cardNode = cardTemplate.content.cloneNode(true);
+          cardNode.children[0].setAttribute("data-card", JSON.stringify(card));
+          cardNode.children[0].setAttribute("data-column-idx", i);
+          cardNode.children[0].querySelector("h3").textContent = card.title;
+          cardNode.children[0].id = card.id;
+
+          cardNode.children[0].addEventListener("dragstart", dragStartHandler);
+          colContainer.appendChild(cardNode);
+        }
+
+        boardParent.appendChild(colNode);
+      });
+    }
+
+    render();
+
+    /* Networking */
     const ws = new WebSocket("ws://localhost:8000/connect");
 
     function handleServerMessage(event) {

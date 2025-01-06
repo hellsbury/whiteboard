@@ -1,5 +1,6 @@
 const std = @import("std");
 const ws = @import("./websocket.zig");
+const builtin = @import("builtin");
 
 const Request = std.http.Server.Request;
 
@@ -45,7 +46,7 @@ fn handleWsConversation(allocator: std.mem.Allocator, conn: std.net.Server.Conne
         defer message.deinit();
 
         if (message.opcode == ws.Opcode.connection_close) {
-            std.log.err("received close opcode", .{});
+            std.log.info("received close opcode", .{});
             try message_writer.writeFrame(conn_writer, "", true, ws.Opcode.connection_close);
             break;
         }
