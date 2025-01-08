@@ -135,6 +135,50 @@
         margin-left: 0.5rem;
         color: var(--primary-color);
       }
+
+      .vl {
+        border-left: 1px solid darkgrey;
+        height: 80vh;
+      }
+
+      /* Modal background */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: calc(50vh - 2rem); /* Location of the box (and my attempt to really center it) */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      }
+
+      /* Modal content */
+      .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      /* Close button */
+      .close {
+        color: #aaaaaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -171,6 +215,19 @@
         <p class="column__card-contents">Card Contents</p>
       </div>
     </template>
+    <template id="vertical-line">
+        <div class="vl"></div>
+    </template>
+    <div id="card-modal" class="modal">
+        <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="title"></h2>
+        <h3>ID:</h3>
+        <span class="idx"></span>
+        <h3>Description:</h3>
+        <span class="description"></span>
+        </div>
+    </div>
   </body>
   <script>
     /* state management */
@@ -183,7 +240,7 @@
             cards: [
               { id: "a", title: "something to do" },
               { id: "c", title: "idk anymore" },
-              { id: "f", title: "a third card how about that" },
+              { id: "f", title: "a third card how about that", description: "here is a longer description that will only be shown whenever the modal is showing"},
             ],
           },
           {
@@ -204,6 +261,9 @@
         ],
       },
     };
+
+    var modal = document.getElementById("card-modal");
+    var span = document.getElementsByClassName("close")[0];
 
     function reducer(state, action) {
       switch (action.type) {
@@ -245,6 +305,7 @@
     const columnTemplate = document.getElementById("column-template");
     const cardTemplate = document.getElementById("card-template");
     const boardParent = document.getElementById("board-parent");
+    const verticalLine = document.getElementById("vertical-line");
 
     function dragStartHandler(event) {
       event.dataTransfer.dropEffect = "move";
@@ -290,6 +351,15 @@
           JSON.parse(draggingCard.getAttribute("data-card")),
         );
       }
+    }
+
+    function showCardPopup(data) {
+      const dataObject = JSON.parse(data);
+
+      modal.querySelector(".title").textContent = dataObject['title']
+      modal.querySelector(".idx").textContent = dataObject['id'];
+      modal.querySelector(".description").textContent = dataObject['description'];
+      modal.style.display = "block";
     }
 
     function getNewCardIndex(target, event) {
@@ -351,11 +421,29 @@
           cardNode.children[0].id = card.id;
 
           cardNode.children[0].addEventListener("dragstart", dragStartHandler);
+          cardNode.children[0].addEventListener("click", function(e) {
+            showCardPopup(e.target.getAttribute("data-card"));
+          });
           colContainer.appendChild(cardNode);
         }
 
         boardParent.appendChild(colNode);
+
+        // Add vertical line to separate columns
+        boardParent.appendChild(verticalLine.content.cloneNode(true));
       });
+    }
+
+    // When the user clicks on <span> (x), close the card modal
+    span.onclick = function() {
+      modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the card modal, close it
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
     }
 
     render();
