@@ -210,10 +210,10 @@
       </div>
     </template>
     <template id="card-template">
-      <div class="column__card" draggable="true" data-type="column-card">
-        <h3 class="column__card-title">Card Title</h3>
-        <p class="column__card-contents">Card Contents</p>
-      </div>
+        <button class="column__card" draggable="true" data-type="column-card" onclick="showCardPopup(this)">
+            <h3 class="column__card-title">Card Title</h3>
+            <p class="column__card-contents">Card Contents</p>
+        </button>
     </template>
     <template id="vertical-line">
         <div class="vl"></div>
@@ -354,7 +354,7 @@
     }
 
     function showCardPopup(data) {
-      const dataObject = JSON.parse(data);
+      const dataObject = JSON.parse(data.getAttribute("data-card"));
 
       modal.querySelector(".title").textContent = dataObject['title']
       modal.querySelector(".idx").textContent = dataObject['id'];
@@ -421,9 +421,10 @@
           cardNode.children[0].id = card.id;
 
           cardNode.children[0].addEventListener("dragstart", dragStartHandler);
-          cardNode.children[0].addEventListener("click", function(e) {
-            showCardPopup(e.target.getAttribute("data-card"));
-          });
+          // cardNode.children[0].addEventListener("click", function(e) {
+          //   console.log(e.target.parentElement);
+          //   showCardPopup(e.target.querySelector("parentElement").getAttribute("data-card"));
+          // });
           colContainer.appendChild(cardNode);
         }
 
