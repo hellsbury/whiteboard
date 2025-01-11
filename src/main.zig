@@ -33,7 +33,7 @@ fn defaultHandler(allocator: std.mem.Allocator, request: *Request) !void {
     if (std.mem.eql(u8, request.head.target, "/")) {
         file_name = "index.html";
     } else {
-        file_name = request.head.target[1..]; // trim trailing slash
+        file_name = request.head.target[1..]; // trim leading slash
     }
 
     const final_file_name = try std.mem.concat(allocator, u8, &[_][]const u8{ "www", "/", file_name });

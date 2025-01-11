@@ -394,11 +394,11 @@ function dispatchAndRender(action) {
   board.render();
 }
 
+// whereas this is where actions would go that we _only_ need to send to other
+// clients -- we don't need to re-paint ourselves (though we do need to keep our
+// state in sync)
 function dispatchServerOnly(action) {
   console.debug("dispatchServerOnly", action);
-  // TODO: this is where actions would go that we _only_ need to send to other
-  // clients -- we don't need to re-paint ourselves (though we do need to keep
-  // our state in sync)
   switch (action.type) {
     case "MOVE_CARD": {
       const previousColumn = state.boardState.columns[action.data.previousColumn];
