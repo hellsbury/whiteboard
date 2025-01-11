@@ -15,11 +15,40 @@ fn prettyPrintClientAddr(prefix: []const u8, addr: std.net.Address) !void {
     try bw.flush();
 }
 
-fn homeHandler(allocator: std.mem.Allocator, request: *Request) !void {
-    var file = try std.fs.cwd().openFile("www/index.html", .{});
+fn mimeTypeForFileName(file: []const u8) []const u8 {
+    if (std.mem.endsWith(u8, file, ".html")) {
+        return "text/html";
+    } else if (std.mem.endsWith(u8, file, ".css")) {
+        return "text/css";
+    } else if (std.mem.endsWith(u8, file, ".js")) {
+        return "text/javascript";
+    }
+
+    return "text/plain";
+}
+
+fn defaultHandler(allocator: std.mem.Allocator, request: *Request) !void {
+    // read the path from the request
+    var file_name: []const u8 = undefined;
+    if (std.mem.eql(u8, request.head.target, "/")) {
+        file_name = "index.html";
+    } else {
+        file_name = request.head.target[1..]; // trim leading slash
+    }
+
+    const final_file_name = try std.mem.concat(allocator, u8, &[_][]const u8{ "www", "/", file_name });
+    defer allocator.free(final_file_name);
+
+    var file = std.fs.cwd().openFile(final_file_name, .{}) catch {
+        try request.respond("Not Found", .{
+            .status = std.http.Status.not_found,
+        });
+        return;
+    };
+
     const contents = try file.readToEndAlloc(allocator, 1 << 20);
     try request.respond(contents, .{
-        .extra_headers = &.{.{ .name = "content-type", .value = "text/html" }},
+        .extra_headers = &.{.{ .name = "content-type", .value = mimeTypeForFileName(file_name) }},
     });
 }
 
@@ -98,15 +127,11 @@ fn handleConnection(conn: std.net.Server.Connection, allocator: std.mem.Allocato
         };
 
         std.log.info("request: {s} {s}", .{ @tagName(request.head.method), request.head.target });
-        if (std.mem.eql(u8, request.head.target, "/")) {
-            try homeHandler(allocator, &request);
-        } else if (std.mem.eql(u8, request.head.target, "/connect")) {
+        if (std.mem.eql(u8, request.head.target, "/connect")) {
             try websocketUpgradeHandler(allocator, &request, conn);
             break;
         } else {
-            try request.respond("Not Found", .{
-                .status = std.http.Status.not_found,
-            });
+            try defaultHandler(allocator, &request);
         }
 
         if (!request.head.keep_alive) {
