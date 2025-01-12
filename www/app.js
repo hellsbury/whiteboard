@@ -32,11 +32,6 @@ const state = {
         title: "Third Column",
         cards: [{ id: 8, title: "lorum ipsum" }],
       },
-      {
-        id: 9,
-        title: "Fourth Column",
-        cards: [{ id: 10, title: "dolor amat" }],
-      },
     ],
   },
 };
@@ -65,7 +60,7 @@ class HlColumnsContainer extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = state.boardState.columns
+    const columns = state.boardState.columns
       .map((column, i) => {
         const cards = column.cards
           .map((card) => {
@@ -84,19 +79,68 @@ class HlColumnsContainer extends HTMLElement {
           })
           .join("");
 
-        // TODO: do a dispatchServerOnly on column title change
         const template = `
         <div class="column">
           <input class="column-title" value="${column.title}" />
           <hl-cards column-idx="${i}">
             ${cards}
           </hl-cards>
+          <button class="column__add-button">+ add new card</button>
+          <button class="column__delete-button">delete column</button>
         </div>
         `;
 
         return template;
       })
       .join("\n");
+
+    this.innerHTML = `
+      ${columns}
+      <div class="new-column-container">
+        <button class="new-column-container__button">+ New Column</button>
+      </div>
+    `;
+
+    /** @type {HTMLButtonElement} */
+    const newColButton = this.querySelector(".new-column-container__button");
+    newColButton.addEventListener("click", () => {
+      dispatch(
+        {
+          type: "ADD_COL",
+        },
+        true,
+      );
+    });
+
+    /** @type {HTMLButtonElement[]} */
+    const addButtons = this.querySelectorAll(".column__add-button");
+    const onButtonClick = (i) => () => {
+      modalDialog.createNewCard(i);
+    };
+    addButtons.forEach((button, i) => button.addEventListener("click", onButtonClick(i)));
+
+    /** @type {HTMLButtonElement[]} */
+    const deleteButtons = this.querySelectorAll(".column__delete-button");
+    const onDeleteColClick = (i) => () => {
+      dispatch({ type: "DELETE_COL", data: { idx: i } }, true);
+    };
+    deleteButtons.forEach((button, i) => button.addEventListener("click", onDeleteColClick(i)));
+
+    /** @type {HTMLInputElement[]} */
+    const inputs = this.querySelectorAll(".column-title");
+    const onTitleChange = (i) => (event) => {
+      dispatch({
+        type: "UPDATE_COL_TITLE",
+        data: {
+          idx: i,
+          title: event.target.value,
+        },
+      });
+    };
+
+    inputs.forEach((input, i) => {
+      input.addEventListener("change", onTitleChange(i));
+    });
   }
 
   disconnectedCallback() {
@@ -161,7 +205,7 @@ class HlCards extends HTMLElement {
       newIndex = newCardIdx;
     }
 
-    dispatchServerOnly({
+    dispatch({
       type: "MOVE_CARD",
       data: {
         cardId: Number(draggingCard.getAttribute("card-id")),
@@ -238,14 +282,23 @@ class HlCard extends HTMLButtonElement {
   }
 
   render() {
-    // TODO: I know we're not supposed to display the whole description in the card I'm
-    // getting to it just a minute
+    // TODO: display only a little bit (N lines) of the description, if it's long
     const template = `
-      <h3 class="column__card-title">${this.cardTitle}</h3>
+      <div class="column__card__title-container">
+        <h3 class="column__card-title">${this.cardTitle}</h3>
+        <button class="column__card__delete-button">X</button>
+      </div>
       <p class="column__card-contents">${this.cardDescription}</p>
     `;
 
     this.innerHTML = template;
+
+    const deleteButton = this.querySelector(".column__card__delete-button");
+    deleteButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      dispatch({ type: "DELETE_CARD", data: { id: this.cardId, columnIdx: this.columnIdx } }, true);
+    });
   }
 
   disconnectedCallback() {
@@ -295,6 +348,7 @@ class HlCardModal extends HTMLDialogElement {
     super();
 
     this.card = {};
+    this.mode = "EDIT";
   }
 
   connectedCallback() {
@@ -311,7 +365,21 @@ class HlCardModal extends HTMLDialogElement {
 
   openCard(cardData) {
     console.debug("hl-card-modal: opening card:", cardData);
+    this.mode = "EDIT";
     this.card = cardData;
+    this.render();
+    this.showModal();
+  }
+
+  createNewCard(columnIdx) {
+    console.debug("hl-card-modal: creating new card");
+    this.mode = "CREATE";
+    this.createColumnIdx = columnIdx;
+    this.card = {
+      id: 0,
+      title: "",
+      description: "",
+    };
     this.render();
     this.showModal();
   }
@@ -319,7 +387,7 @@ class HlCardModal extends HTMLDialogElement {
   render() {
     const template = `
       <p class="card-modal__id">Card ID: ${this.card.id}</p>
-      <input type="text" value="${this.card.title}" class="card-modal__title"></input>
+      <input type="text" value="${this.card.title}" class="card-modal__title" placeholder="card title"></input>
       <textarea class="card-modal__description">${this.card.description}</textarea>
       <form method="dialog">
         <button class="card-modal__save">Save</button>
@@ -333,16 +401,35 @@ class HlCardModal extends HTMLDialogElement {
   }
 
   updateState() {
-    const title = this.querySelector(".card-modal__title").value;
-    const description = this.querySelector(".card-modal__description").value;
-    dispatchAndRender({
-      type: "UPDATE_CARD",
-      data: {
-        id: this.card.id,
-        title,
-        description,
-      },
-    });
+    if (this.mode === "EDIT") {
+      const title = this.querySelector(".card-modal__title").value;
+      const description = this.querySelector(".card-modal__description").value;
+      dispatch(
+        {
+          type: "UPDATE_CARD",
+          data: {
+            id: this.card.id,
+            title,
+            description,
+          },
+        },
+        true,
+      );
+    } else if (this.mode === "CREATE") {
+      const title = this.querySelector(".card-modal__title").value;
+      const description = this.querySelector(".card-modal__description").value;
+      dispatch(
+        {
+          type: "CREATE_CARD",
+          data: {
+            columnIdx: this.createColumnIdx,
+            title,
+            description,
+          },
+        },
+        true,
+      );
+    }
   }
 }
 
@@ -370,13 +457,11 @@ window.customElements.define("hl-card-modal", HlCardModal, { extends: "dialog" }
 // rendered _somewhere else_, then of course we should re-render.
 
 // state changes that _do_ require re-painting the board: e.g. saving an edit modal
-function dispatchAndRender(action) {
-  console.debug("dispatchAndRender", action);
+function dispatch(action, render = false) {
+  console.debug("dispatch", action);
   switch (action.type) {
-    // FIXME: this is a pretty silly way to update a card by id, but I'm pushing
-    // off state normalization etc until I figure out how the server works.  So
-    // for now we'll be silly and iterate -- it works locally for now.  and honestly
-    // we're probably never going to have _that_ many cards.
+    // FIXME: this is probably a silly way to update the cards (just by
+    // iterating all the cards on the board), but it works for now.
     case "UPDATE_CARD": {
       outer: for (const column of state.boardState.columns) {
         let i = 0;
@@ -388,18 +473,8 @@ function dispatchAndRender(action) {
           i++;
         }
       }
+      break;
     }
-  }
-
-  board.render();
-}
-
-// whereas this is where actions would go that we _only_ need to send to other
-// clients -- we don't need to re-paint ourselves (though we do need to keep our
-// state in sync)
-function dispatchServerOnly(action) {
-  console.debug("dispatchServerOnly", action);
-  switch (action.type) {
     case "MOVE_CARD": {
       const previousColumn = state.boardState.columns[action.data.previousColumn];
       const originalCardIdx = previousColumn.cards.findIndex((x) => x.id == action.data.cardId);
@@ -411,6 +486,59 @@ function dispatchServerOnly(action) {
 
       // add it to the new column:
       newColumn.cards.splice(action.data.newIndex, 0, cardData);
+      break;
     }
+    case "UPDATE_COL_TITLE": {
+      state.boardState.columns[action.data.idx].title = action.data.title;
+      break;
+    }
+    case "CREATE_CARD": {
+      // FIXME: again, this is silly, and this would normally require
+      // negotiation with the server (unless ids are just something we use locally)
+      let maxId = 0;
+      for (const col of state.boardState.columns) {
+        maxId = Math.max(col.id, maxId);
+        for (const card of col.cards) {
+          maxId = Math.max(card.id, maxId);
+        }
+      }
+
+      const { title, description } = action.data;
+
+      state.boardState.columns[action.data.columnIdx].cards.push({
+        id: maxId + 1,
+        title,
+        description,
+      });
+      break;
+    }
+    case "ADD_COL": {
+      // FIXME: yeah, ok, we get it
+      let maxId = 0;
+      for (const col of state.boardState.columns) {
+        maxId = Math.max(col.id, maxId);
+        for (const card of col.cards) {
+          maxId = Math.max(card.id, maxId);
+        }
+      }
+
+      state.boardState.columns.push({ id: maxId + 1, title: "New Column", cards: [] });
+      break;
+    }
+    case "DELETE_CARD": {
+      const cardIdx = state.boardState.columns[action.data.columnIdx].cards.findIndex(
+        (x) => x.id === action.data.id,
+      );
+      state.boardState.columns[action.data.columnIdx].cards.splice(cardIdx, 1);
+      break;
+    }
+    case "DELETE_COL": {
+      state.boardState.columns.splice(action.data.idx, 1);
+      break;
+    }
+  }
+
+  if (render) {
+    board.render();
   }
 }
