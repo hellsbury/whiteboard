@@ -312,14 +312,14 @@ main {
     border: none;
     outline: none;
     border-radius: 999px;
-    background-color: transparent;
+    background-color: var(--gray-100);
     padding: 0.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
 
     &:hover, &:focus {
-      background-color: var(--gray-300);
+      background-color: var(--gray-200);
     }
 
     & svg {

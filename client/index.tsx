@@ -404,6 +404,7 @@ function DialogContents() {
           name="title"
           placeholder="Card Title"
           onChange={onInputChange("title")}
+          autofocus
         />
         <textarea
           className="dialog__input"
