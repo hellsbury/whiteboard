@@ -147,6 +147,12 @@ const useStore = create<BoardStore>((set) => ({
       const dialogState = { ...state.dialogState, open: true, columnIndex, mode };
       if (card) {
         dialogState.card = card;
+      } else {
+        dialogState.card = {
+          id: "",
+          title: "",
+          description: "",
+        };
       }
       return { dialogState };
     }),
@@ -174,6 +180,17 @@ interface CardProps {
   card: Card;
 }
 
+const CloseIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 384 512"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M376.6 84.5c11.3-13.6 9.5-33.8-4.1-45.1s-33.8-9.5-45.1 4.1L192 206 56.6 43.5C45.3 29.9 25.1 28.1 11.5 39.4S-3.9 70.9 7.4 84.5L150.3 256 7.4 427.5c-11.3 13.6-9.5 33.8 4.1 45.1s33.8 9.5 45.1-4.1L192 306 327.4 468.5c11.3 13.6 31.5 15.4 45.1 4.1s15.4-31.5 4.1-45.1L233.7 256 376.6 84.5z" />
+  </svg>
+);
+
 const CARD_ID_DATA_TYPE = "application/card-id";
 
 function Card({ card, parentIndex }: CardProps) {
@@ -200,31 +217,7 @@ function Card({ card, parentIndex }: CardProps) {
       <div className="card__title-container">
         <p class="card__title">{card.title}</p>
         <button class="card__delete-button" onClick={onDeleteClick}>
-          <svg viewBox="-0.5 0 25 25" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              {" "}
-              <path
-                d="M3 21.32L21 3.32001"
-                stroke="#000000"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                style="--darkreader-inline-stroke: var(--darkreader-text-000000, #e8e6e3);"
-                data-darkreader-inline-stroke=""
-              ></path>{" "}
-              <path
-                d="M3 3.32001L21 21.32"
-                stroke="#000000"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                style="--darkreader-inline-stroke: var(--darkreader-text-000000, #e8e6e3);"
-                data-darkreader-inline-stroke=""
-              ></path>{" "}
-            </g>
-          </svg>
+          <CloseIcon />
         </button>
       </div>
       <p class="card__description">{card.description}</p>
@@ -337,6 +330,26 @@ function Column({ column, columnIdx }: ColumnProps) {
 
 function Dialog() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [dialogState, closeDialog] = useStore(
+    useShallow((state) => [state.dialogState, state.closeDialog]),
+  );
+
+  useEffect(() => {
+    if (dialogState.open) {
+      dialogRef.current?.showModal();
+    } else {
+      dialogRef.current?.close();
+    }
+  }, [dialogState.open]);
+
+  return (
+    <dialog ref={dialogRef} onClose={closeDialog} className="dialog">
+      {dialogState.open ? <DialogContents /> : null}
+    </dialog>
+  );
+}
+
+function DialogContents() {
   const [dialogState, columns, closeDialog, updateDialogCardState, addCard, updateCard] = useStore(
     useShallow((state) => [
       state.dialogState,
@@ -347,19 +360,6 @@ function Dialog() {
       state.updateCard,
     ]),
   );
-
-  const dialogTitle =
-    dialogState.mode === "create"
-      ? `Creating new card in "${columns[dialogState.columnIndex].title}"`
-      : `Edit card in "${columns[dialogState.columnIndex].title}"`;
-
-  useEffect(() => {
-    if (dialogState.open) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
-    }
-  }, [dialogState.open]);
 
   const onInputChange =
     (k: keyof Card) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -384,20 +384,32 @@ function Dialog() {
     closeDialog();
   };
 
+  const dialogTitle =
+    dialogState.mode === "create"
+      ? `Creating new card in "${columns[dialogState.columnIndex].title}"`
+      : `Edit card in "${columns[dialogState.columnIndex].title}"`;
+
   return (
-    <dialog ref={dialogRef} onClose={closeDialog} className="dialog">
-      <h1 className="dialog__title">{dialogTitle}</h1>
+    <>
+      <div className="dialog__title-container">
+        <h1 className="dialog__title">{dialogTitle}</h1>
+        <button className="dialog__close-button" onClick={closeDialog}>
+          <CloseIcon />
+        </button>
+      </div>
       <form className="dialog__form" onSubmit={onFormSubmit}>
         <input
           className="dialog__input"
           value={dialogState.card.title}
           name="title"
+          placeholder="Card Title"
           onChange={onInputChange("title")}
         />
         <textarea
           className="dialog__input"
           onChange={onInputChange("description")}
           name="description"
+          placeholder="Card Description"
         >
           {dialogState.card.description}
         </textarea>
@@ -405,7 +417,7 @@ function Dialog() {
           Save
         </button>
       </form>
-    </dialog>
+    </>
   );
 }
 
