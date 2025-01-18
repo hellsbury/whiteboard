@@ -64,12 +64,12 @@ class HlColumnsContainer extends HTMLElement {
       .map((column, i) => {
         const cards = column.cards
           .map((card) => {
-            return `<button 
+            return `<button
                   id="hl-card-${card.id}"
-                  is="hl-card" 
+                  is="hl-card"
                   class="column__card"
-                  card-id="${card.id}" 
-                  card-title="${card.title}" 
+                  card-id="${card.id}"
+                  card-title="${card.title}"
                   column-idx="${i}"
                   draggable="true"
                   card-description="${card.description ?? ""}"
@@ -387,8 +387,8 @@ class HlCardModal extends HTMLDialogElement {
   render() {
     const template = `
       <p class="card-modal__id">Card ID: ${this.card.id}</p>
-      <input type="text" value="${this.card.title}" class="card-modal__title" placeholder="card title"></input>
-      <textarea class="card-modal__description">${this.card.description}</textarea>
+      <input type="text" value="${this.card.title}" class="card-modal__title" placeholder="Card Title!"></input>
+      <textarea class="card-modal__description" placeholder="Enter a task description here!">${this.card.description}</textarea>
       <form method="dialog">
         <button class="card-modal__save">Save</button>
       </form>

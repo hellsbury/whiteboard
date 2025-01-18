@@ -1,12 +1,7 @@
 "Features"
 - Card labels under description
-- Create card
-- Delete card (can be a button on the card)
-- Create column
-- Delete column
 - Dark mode
-
-
-
-Questions:
-  - How do I make the card and all its children clickable while all directing to the same element?
+- Trash bin? (If I accidentally delete a card)
+- Close the card edit modal (Currently the only way to leave is to save. Probably not a big deal but may be nice)
+- Maybe an "Are you sure you wanna delete this?" for *cards*
+- Maybe an "Are you sure you wanna delete this?" for *columns*
