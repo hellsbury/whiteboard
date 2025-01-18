@@ -41,6 +41,19 @@ const modalDialog = document.getElementById("card-modal");
 /** @type {HlColumnsContainer} */
 const board = document.getElementById("columns-container");
 
+// Used to toggle the theme
+const html = document.querySelector('html');
+const themeToggle = document.getElementById('theme-toggle');
+
+themeToggle.addEventListener('change', function () {
+  if (themeToggle.checked) {
+    html.style.setProperty("color-scheme", "light");
+  } else {
+    html.style.setProperty("color-scheme", "dark");
+  }
+});
+
+
 /**
  ******************************************************************************
  * UI Components

@@ -3,6 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>whiteboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="main.css" />
     <script defer src="app.js" type="module"></script>
   </head>
@@ -12,6 +13,15 @@
         <h1 class="header__title">
           <a class="header__title-link" href="/">whiteboard</a>
         </h1>
+        <div class="switch-container">
+          <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider">
+                <i class="fas fa-sun sun-icon"></i>
+                <i class="fas fa-moon moon-icon"></i>
+            </span>
+          </label>
+        </div>
       </div>
     </header>
     <main class="main">
@@ -19,7 +29,7 @@
     </main>
     <footer class="footer">
       <div class="footer__container">
-        2025 Michael Helvey & Mason Stooksbury
+        2025 Michael Helvey & Mason Stooksbury |
         <a href="https://github.com/hellsbury/whiteboard" class="footer__link">View Source</a>
       </div>
     </footer>
