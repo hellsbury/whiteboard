@@ -4,25 +4,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>whiteboard</title>
     <link rel="stylesheet" href="main.css" />
-    <script defer src="app.js" type="module"></script>
+    <script defer src="js/index.js" type="module"></script>
   </head>
   <body>
     <header class="header">
-      <div class="header__container">
-        <h1 class="header__title">
-          <a class="header__title-link" href="/">whiteboard</a>
-        </h1>
+      <div class="header__inner">
+        <a href="/" class="header__logo">whiteboard</a>
+        <nav>
+          <a
+            class="button"
+            href="https://github.com/hellsbury/whiteboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Github</a
+          >
+        </nav>
       </div>
     </header>
-    <main class="main">
-      <hl-columns-container class="main__container" id="columns-container"></hl-columns-container>
-    </main>
+    <main id="root"></main>
     <footer class="footer">
-      <div class="footer__container">
-        Copyright &copy; 2025 Michael Helvey & Mason Stooksbury.
-        <a href="https://github.com/hellsbury/whiteboard" class="footer__link">View Source</a>
+      <div class="footer__inner">
+        <p>a <a href="https://github.com/hellsbury">hellsbury</a> project.</p>
       </div>
     </footer>
-    <dialog is="hl-card-modal" id="card-modal" class="card-modal" autofocus></dialog>
   </body>
 </html>

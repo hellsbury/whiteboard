@@ -22,6 +22,8 @@ fn mimeTypeForFileName(file: []const u8) []const u8 {
         return "text/css";
     } else if (std.mem.endsWith(u8, file, ".js")) {
         return "text/javascript";
+    } else if (std.mem.endsWith(u8, file, ".woff2")) {
+        return "font/woff2";
     }
 
     return "text/plain";

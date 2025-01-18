@@ -1,0 +1,20 @@
+{
+  "name": "whiteboard",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "bundle:dev": "bun build ./client/index.tsx --splitting --outdir=www/js --sourcemap=external",
+    "bundle:prod": "bun build ./client/index.tsx --minify --splitting --outdir=www/js --sourcemap=external"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "nanoid": "^5.0.9",
+    "preact": "^10.25.4",
+    "zustand": "^5.0.3"
+  }
+}

@@ -1,2 +1,4 @@
 zig-out
 .zig-cache
+www/js
+node_modules
