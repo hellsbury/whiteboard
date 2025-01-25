@@ -5,10 +5,11 @@ real-time collaborative whiteboard to manage our projects
 ## Getting Started
 
 You need a compiler for the [Zig Programming Language](https://github.com/ziglang/zig/releases), and
-a web browser. Required version: 0.13.0.
+a web browser. Required version: 0.13.0. Also [Bun](https://bun.sh/), at least version 1.1.43.
 
 To run the project, execute `zig build`, and then execute the binary in `./zig-out/bin/whiteboard.`
-You can now visit the application at `http://localhost:8000`.
+Then, in another terminal, execute `bun bundle:dev --watch`. You can now visit the application at
+`http://localhost:8000`.
 
 ## Architecture
 
